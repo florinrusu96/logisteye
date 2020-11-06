@@ -53,8 +53,12 @@ MIDDLEWARE = [
 ]
 
 REST_FRAMEWORK = {
-    "DEFAULT_AUTHENTICATION_CLASSES": ("rest_framework.authentication.SessionAuthentication",)
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        'rest_framework.authentication.BasicAuthentication',
+        'rest_framework.authentication.SessionAuthentication',
+    ]
 }
+
 AUTHENTICATION_BACKENDS = ["django.contrib.auth.backends.ModelBackend"]
 
 ROOT_URLCONF = "backend.urls"
@@ -173,3 +177,5 @@ if TESTING:
         "django.contrib.messages.middleware.MessageMiddleware",
     ]
     CACHES = {"default": {"BACKEND": "django.core.cache.backends.dummy.DummyCache"}}
+
+AUTH_USER_MODEL = 'rest_api.User'
