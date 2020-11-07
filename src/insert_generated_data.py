@@ -18,6 +18,7 @@ large_size = models.Size.objects.create(width=15, height=15, depth=15, name='lar
 
 sizes = [small_size, medium_size, large_size]
 
+
 def insert_package_data(company):
     source_lat, source_long = packages.generate_locations()
     source_location = models.Location.objects.create(latitude=source_lat, longitude=source_long, name='test')

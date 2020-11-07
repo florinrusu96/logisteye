@@ -44,7 +44,7 @@ def generate_packages(count, focus_points=None):
         return [(lat_array[i], long_array[i]) for i in range(0, count)]
 
     for focus in focus_points[:-1]:
-        focused_range = get_focused_range(focus, 3 * splits)
+        focused_range = get_focused_range(focus, 2 * splits)
         lat_array.extend([round(random.uniform(focused_range[0][0], focused_range[1][0]), 10)
                           for i in range(0, count // splits)])
         long_array.extend([round(random.uniform(focused_range[0][1], focused_range[1][1]), 10)
