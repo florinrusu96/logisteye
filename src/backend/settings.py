@@ -36,8 +36,10 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     "drf_yasg",
     "corsheaders",
+    "django_cron",
     "rest_framework",
     "rest_api.apps.RestApiConfig",
+    "communication.apps.CommunicationConfig",
 ]
 
 MIDDLEWARE = [
