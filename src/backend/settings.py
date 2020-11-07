@@ -38,6 +38,7 @@ INSTALLED_APPS = [
     "corsheaders",
     "django_cron",
     "rest_framework",
+    "simulation.apps.SimulationConfig",
     "rest_api.apps.RestApiConfig",
     "communication.apps.CommunicationConfig",
 ]
