@@ -4,5 +4,5 @@ from rest_api import views
 
 urlpatterns = [
     url("packages/", views.PackageListView.as_view()),
-    path("users/<int:pk>/", views.UserGetView.as_view())
+    path("users/", views.UserPostView.as_view())
 ]
