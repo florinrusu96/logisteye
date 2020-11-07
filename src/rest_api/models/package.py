@@ -9,3 +9,4 @@ class Package(models.Model):
                                          related_name="current_location_location")
     company = models.ForeignKey("Company", on_delete=models.CASCADE)
     is_delivered = models.BooleanField()
+    date = models.DateField(auto_now=True)
