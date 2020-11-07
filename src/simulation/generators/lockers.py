@@ -1,7 +1,7 @@
 import csv
-import math
 from functools import cmp_to_key
 import json
+from simulation.generators.utils import *
 
 
 class LockerScaffold:
@@ -60,20 +60,6 @@ def find_most_appealing(count, scaffolds_array):
     skip_step = len(sorted_scaffolds) // count
 
     return [sorted_scaffolds[i * skip_step] for i in range(0, count)]
-
-
-def compute_distance(lat_1, long_1, lat_2, long_2):
-    return math.sqrt((lat_1 - lat_2) ** 2 + (long_1 - long_2) ** 2)
-
-
-def make_comparator_as_distance_to_center(center_lat, center_long):
-    def compare(scaffold_1, scaffold_2):
-        diff = compute_distance(scaffold_1.lat, scaffold_1.long, center_lat, center_long) - \
-               compute_distance(scaffold_2.lat, scaffold_2.long, center_lat, center_lat)
-
-        return 1 if diff > 0 else -1
-
-    return compare
 
 
 def compute_center(scaffolds_array):

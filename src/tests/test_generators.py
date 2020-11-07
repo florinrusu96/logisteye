@@ -26,5 +26,12 @@ class LockersGeneratorTest(unittest.TestCase):
 class PackagesGeneratorTest(unittest.TestCase):
     def test_generate_packages(self):
         result = packages.generate_packages(200)
-        print(result)
+        # print(result)
         self.assertEqual(200, len(result))
+
+    def test_generate_squares(self):
+        result_json = packages.group_in_squares_json(packages.generate_packages(
+            5500, [(48.9074575655, 2.4008293293), (48.85894749981, 2.3229999114)]), 0.3)
+        # print(result)
+        print(result_json)
+        self.assertEqual(True, True)
