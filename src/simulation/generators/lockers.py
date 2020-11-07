@@ -20,7 +20,7 @@ class LockerScaffold:
 
 
 def generate_lockers(boxes_count):
-    lockers_count = boxes_count // 6
+    lockers_count = boxes_count // 3
     scaffolds_array = read_locker_scaffolds()
 
     return find_most_appealing(lockers_count, scaffolds_array)
@@ -30,6 +30,12 @@ def generate_lockers_json_file(boxes_count):
     lockers = generate_lockers(boxes_count)
 
     return json.dumps([locker.__dict__ for locker in lockers])
+
+
+def generate_lockers_csv_file(boxes_count):
+    lockers = generate_lockers(boxes_count)
+    coordinates = [f"{p.lat},{p.long}" for p in lockers]
+    return '\n'.join(coordinates)
 
 
 def read_locker_scaffolds():
