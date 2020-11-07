@@ -25,6 +25,6 @@ class LockersGeneratorTest(unittest.TestCase):
 
 class PackagesGeneratorTest(unittest.TestCase):
     def test_generate_packages(self):
-        result = packages.generate_packages(200)
+        result = packages.generate_locations(200)
         print(result)
         self.assertEqual(200, len(result))

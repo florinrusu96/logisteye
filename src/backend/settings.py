@@ -37,7 +37,7 @@ INSTALLED_APPS = [
     "drf_yasg",
     "corsheaders",
     "rest_framework",
-    "simulation",
+    "simulation.apps.SimulationConfig",
     "rest_api.apps.RestApiConfig",
 ]
 
