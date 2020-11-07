@@ -6,3 +6,5 @@ whitenoise
 gunicorn
 numpy
 sklearn
+wheels
+django-cron
