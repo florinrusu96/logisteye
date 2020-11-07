@@ -27,6 +27,9 @@ SECRET_KEY = os.environ.get("SECRET_KEY", "_")
 if not SECRET_KEY and not DEBUG:
     raise Exception("You're trying to run production without setting the SECRET_KEY env var")
 
+IS_MASTER_INSTANCE = False
+SELF_INSTANCE_URL = ''
+
 INSTALLED_APPS = [
     "django.contrib.admin",
     "django.contrib.auth",
@@ -38,7 +41,7 @@ INSTALLED_APPS = [
     "corsheaders",
     "django_cron",
     "rest_framework",
-    "simulation",
+    "simulation.apps.SimulationConfig",
     "rest_api.apps.RestApiConfig",
     "communication.apps.CommunicationConfig",
 ]
