@@ -24,10 +24,11 @@ from drf_yasg import openapi
 from rest_framework import permissions
 
 SchemaView = get_schema_view(
-    openapi.Info(title="URL Shortener API", default_version="v1"),
+    openapi.Info(title="Logisteye API", default_version="v1"),
     public=True,
     permission_classes=(permissions.AllowAny,),
 )
+
 
 urlpatterns = [
     urls.path("admin/", admin.site.urls, name="admin"),

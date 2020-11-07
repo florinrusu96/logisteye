@@ -16,7 +16,7 @@ class User(AbstractBaseUser, PermissionsMixin):
         default=False,
         help_text=_('Designates whether the user can log into this admin site.'),
     )
-    assigned_area = models.OneToOneField("Area", on_delete=models.DO_NOTHING)
+    assigned_area = models.OneToOneField("Area", on_delete=models.DO_NOTHING, null=True)
 
     objects = UserManager()
 
