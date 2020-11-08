@@ -53,7 +53,7 @@ def insert_locker(company, locker):
         models.Box.objects.create(**data)
 
 
-lockers_list = lockers.generate_lockers(75 * 3)
+lockers_list = lockers.generate_lockers(300 * 3)
 
 company1 = models.Company.objects.get(name='company1')
 insert_package_data(company1)
@@ -70,7 +70,7 @@ insert_package_data(company3)
 for i, locker in zip(range(25), lockers_list[50:75]):
     insert_locker(company3, locker)
 
-couriers.generate_couriers(300)
+couriers.generate_couriers(30)
 
 routing.run_routing_algorithm()
 

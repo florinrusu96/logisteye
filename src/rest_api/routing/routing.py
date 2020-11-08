@@ -1,9 +1,10 @@
 import json
 from math import sin, cos, sqrt, atan2, radians, asin
 from rest_api.models import Locker, Package, Box, User, Area, CourierToPackage, Location
-from rest_api.serializers.area import AreaSerializer
+from rest_api.serializers import AreaSerializer, PackageSerializer, LockerSerializer
 from simulation.generators.utils import *
 from rest_api import models
+from django.db.models import Count
 
 
 DEFAULT_COURIER_RADIUS = 3
@@ -27,9 +28,29 @@ def run_routing_algorithm():
         work_to_do = assign_couriers(packages)
         cut_off -= 1
 
-    unused_bikes = models.User.objects.filter(assigned_area__isnull=True).count()
-    print(f"Unused bikes: {unused_bikes}")
-    return
+    distribute_worker_among_couriers()
+
+
+def distribute_worker_among_couriers():
+    work_free_couriers = [bike for bike in models.User.objects.filter(assigned_area__isnull=True)]
+    while len(work_free_couriers) != 0:
+        over_worked_courier = models.User.objects \
+            .annotate(num_courierToPackage=Count('couriertopackage')) \
+            .order_by('num_courierToPackage') \
+            .filter(assigned_area__isnull=False) \
+            .first()
+
+        courier_to_pack_duty = [courier_to_pack for courier_to_pack in
+                                CourierToPackage.objects.filter(courier=over_worked_courier)]
+        if len(courier_to_pack_duty) < 5:
+            break
+
+        lucky_fellow = work_free_couriers[0]
+        lucky_fellow.assigned_area = over_worked_courier.assigned_area
+        lucky_fellow.save()
+        for courier_to_pack in courier_to_pack_duty[::2]:
+            courier_to_pack.courier = lucky_fellow
+            courier_to_pack.save()
 
 
 def assign_couriers(packages):
@@ -39,9 +60,6 @@ def assign_couriers(packages):
     print(f"Not delivered: {len(not_delivered_packages)}")
     unused_bikes = models.User.objects.filter(assigned_area__isnull=True).count()
     print(f"Unused bikes: {unused_bikes}")
-
-    assigned_areas = [user.assigned_area for user in User.objects.filter(assigned_area__isnull=False)]
-    print([json.dumps(AreaSerializer(instance=area).data) for area in assigned_areas])
 
     for package in not_delivered_packages:
         assign_best_courier_for_package(package)
@@ -62,7 +80,6 @@ def shift_area_to_include_location(area, location):
     return Area(location_center=shifted_area_center, radius=area.radius)
 
 
-# Careful!!! It shifts the user area towards the package if possible!!
 def check_courier_can_cover_package(courier, package):
     global routed_to
     if check_area_contains(courier.assigned_area, routed_to[package]):
@@ -88,11 +105,22 @@ def find_best_locker_in_courier_area(package, courier):
     lockers_in_area = [locker for locker in Locker.objects.all()
                        if check_area_contains(courier.assigned_area, locker.location)]
     if len(lockers_in_area) == 0:
+        debug_all_data()
         return None
 
     distances = [compute_distance(locker.location, package.destination_location) for locker in lockers_in_area]
     index_min = min(range(len(distances)), key=distances.__getitem__)
     return lockers_in_area[index_min]
+
+
+def debug_all_data():
+    lockers = [locker for locker in Locker.objects.all()]
+    bike_areas = [user.assigned_area for user in User.objects.filter(assigned_area__isnull=False)]
+    packages = [package for package in Package.objects.all()]
+
+    print(json.dumps([LockerSerializer(instance=locker).data for locker in lockers]))
+    print(json.dumps([AreaSerializer(instance=area).data for area in bike_areas]))
+    print(json.dumps([PackageSerializer(instance=package).data for package in packages]))
 
 
 def assign_best_courier_for_package(package):
@@ -129,12 +157,16 @@ def assign_best_courier_for_package(package):
         if courier.assigned_area is not None:
             continue
 
-        assigned_area_center = compute_point_in_radius(package.source_location, package.destination_location,
-                                                       2 / 3 * DEFAULT_COURIER_RADIUS)
+        assigned_area_center = compute_point_in_disk(routed_to[package], package.destination_location,
+                                                     2 / 3 * DEFAULT_COURIER_RADIUS)
         assigned_area = Area(location_center=assigned_area_center, radius=DEFAULT_COURIER_RADIUS)
-        courier.assigned_area = assigned_area
 
+        courier.assigned_area = assigned_area
         drop_off_locker = find_best_locker_in_courier_area(package, courier)
+        if drop_off_locker is None:
+            courier.assigned_area = None
+            continue
+
         assigned_area_center.save()
         assigned_area.save()
         courier.save()
@@ -237,10 +269,10 @@ def compute_angle_for_coordinates(point_1, point_2):
     return asin(dlat / dist)
 
 
-def compute_point_in_radius(point_1, point_2, radius):
+def compute_point_in_disk(point_1, point_2, radius):
     angle = compute_angle_for_coordinates(point_1, point_2)
     p = apply_distance_to_location_in_direction(point_1.latitude, point_1.longitude, radius, angle)
-    return Location(latitude=p[0], longitude=p[1])
+    return Location(latitude=min(p[0], point_2.latitude), longitude=min(p[1], point_2.longitude))
 
 
 def check_area_contains(area, location):
