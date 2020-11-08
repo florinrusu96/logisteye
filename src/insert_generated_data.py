@@ -1,6 +1,8 @@
 import os
 import random
 
+from simulation.generators.constants import *
+
 os.environ['DJANGO_SETTINGS_MODULE'] = 'backend.settings'
 import django
 
@@ -22,17 +24,18 @@ sizes = [small_size, medium_size, large_size]
 
 
 def insert_package_data(company):
-    source_lat, source_long = packages.generate_locations()
-    source_location = models.Location.objects.create(latitude=source_lat, longitude=source_long, name='test')
-    dest_lat, dest_long = packages.generate_locations()
-    dest_location = models.Location.objects.create(latitude=dest_lat, longitude=dest_long, name='test')
-    package = {
-        'company': company,
-        'source_location': source_location,
-        'destination_location': dest_location,
-        'is_delivered': False
-    }
-    models.Package.objects.create(**package)
+    destinations = packages.generate_packages(30, [(48.8718468, 2.3665066), (48.8263230, 2.2876292)])
+    source_location = models.Location.objects.create(latitude=PARIS_LOW_LAT, longitude=PARIS_LOW_LONG)
+    for d in destinations:
+        dest_location = models.Location.objects.create(latitude=d[0], longitude=d[1])
+
+        package = {
+            'company': company,
+            'source_location': source_location,
+            'destination_location': dest_location,
+            'is_delivered': False
+        }
+        models.Package.objects.create(**package)
 
 
 def insert_locker(company, locker):
@@ -42,7 +45,7 @@ def insert_locker(company, locker):
         'price': 40
     }
     created_locker = models.Locker.objects.create(**locker_data)
-    for idx in range(int(random.uniform(7, 25))):
+    for idx in range(int(random.uniform(17, 35))):
         data = {
             'locker': created_locker,
             'size': sizes[int(random.uniform(0, 3))]
@@ -52,21 +55,23 @@ def insert_locker(company, locker):
 
 lockers_list = lockers.generate_lockers(75 * 3)
 
+company1 = models.Company.objects.get(name='company1')
+insert_package_data(company1)
 for i, locker in zip(range(25), lockers_list[0:25]):
-    company = models.Company.objects.get(name='company1')
-    insert_package_data(company)
-    insert_locker(company, locker)
+    insert_locker(company1, locker)
 
+company2 = models.Company.objects.get(name='company2')
+insert_package_data(company2)
 for i, locker in zip(range(25), lockers_list[25:50]):
-    company = models.Company.objects.get(name='company2')
-    insert_package_data(company)
-    insert_locker(company, locker)
+    insert_locker(company2, locker)
 
+company3 = models.Company.objects.get(name='company3')
+insert_package_data(company3)
 for i, locker in zip(range(25), lockers_list[50:75]):
-    company = models.Company.objects.get(name='company3')
-    insert_package_data(company)
-    insert_locker(company, locker)
+    insert_locker(company3, locker)
 
-couriers.generate_couriers(20)
+couriers.generate_couriers(300)
 
 routing.run_routing_algorithm()
+
+print(f"Time needed for deliveries: {routing.compute_time_needed_for_deliveries()}")

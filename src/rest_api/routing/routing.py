@@ -6,7 +6,7 @@ from simulation.generators.utils import *
 from rest_api import models
 
 
-DEFAULT_COURIER_RADIUS = 1.2
+DEFAULT_COURIER_RADIUS = 3
 
 
 routed_to = {}
@@ -36,6 +36,12 @@ def assign_couriers(packages):
     not_delivered_packages = [package for package in packages if not package.is_delivered]
     if len(not_delivered_packages) == 0:
         return False
+    print(f"Not delivered: {len(not_delivered_packages)}")
+    unused_bikes = models.User.objects.filter(assigned_area__isnull=True).count()
+    print(f"Unused bikes: {unused_bikes}")
+
+    assigned_areas = [user.assigned_area for user in User.objects.filter(assigned_area__isnull=False)]
+    print([json.dumps(AreaSerializer(instance=area).data) for area in assigned_areas])
 
     for package in not_delivered_packages:
         assign_best_courier_for_package(package)
@@ -81,6 +87,8 @@ def check_courier_can_cover_package(courier, package):
 def find_best_locker_in_courier_area(package, courier):
     lockers_in_area = [locker for locker in Locker.objects.all()
                        if check_area_contains(courier.assigned_area, locker.location)]
+    if len(lockers_in_area) == 0:
+        return None
 
     distances = [compute_distance(locker.location, package.destination_location) for locker in lockers_in_area]
     index_min = min(range(len(distances)), key=distances.__getitem__)
@@ -95,7 +103,8 @@ def assign_best_courier_for_package(package):
         if courier.assigned_area is None:
             continue
 
-        if check_area_contains(courier.assigned_area, routed_to[package]):
+        if check_area_contains(courier.assigned_area, routed_to[package]) \
+                and check_area_contains(courier.assigned_area, package.destination_location):
             package.is_delivered = True
             package.save()
             return
@@ -103,12 +112,17 @@ def assign_best_courier_for_package(package):
         if not check_courier_can_cover_package(courier, package):
             continue
 
-        assigned_area = shift_area_to_include_location(courier.assigned_area, package.source_location)
+        assigned_area = shift_area_to_include_location(courier.assigned_area, routed_to[package])
         courier.assigned_area = assigned_area
+
+        drop_off_locker = find_best_locker_in_courier_area(package, courier)
+        if drop_off_locker is None or drop_off_locker.location == routed_to[package]:
+            continue
+
         assigned_area.location_center.save()
         assigned_area.save()
         courier.save()
-        assign_courier_for_package(courier, package)
+        assign_courier_for_package(courier, package, drop_off_locker)
         return
 
     for courier in couriers:
@@ -119,17 +133,17 @@ def assign_best_courier_for_package(package):
                                                        2 / 3 * DEFAULT_COURIER_RADIUS)
         assigned_area = Area(location_center=assigned_area_center, radius=DEFAULT_COURIER_RADIUS)
         courier.assigned_area = assigned_area
+
+        drop_off_locker = find_best_locker_in_courier_area(package, courier)
         assigned_area_center.save()
         assigned_area.save()
         courier.save()
-
-        assign_courier_for_package(courier, package)
+        assign_courier_for_package(courier, package, drop_off_locker)
         return
 
 
-def assign_courier_for_package(courier, package):
+def assign_courier_for_package(courier, package, drop_off_locker):
     global routed_to
-    drop_off_locker = find_best_locker_in_courier_area(package, courier)
     CourierToPackage.objects.create(**{
         "package": package,
         "courier": courier,
@@ -241,21 +255,62 @@ def apply_distance_to_location_in_direction(lat, long, dist, angle):
     return apply_distance_to_location(lat, long, dist * cos(angle), dist * sin(angle))
 
 
+def compute_time_needed_for_deliveries():
+    couriers = [courier for courier in models.User.objects.filter(assigned_area__isnull=False)]
+    packages = [package for package in models.Package.objects.all()]
+    courier_to_package = [courier_to_package for courier_to_package in models.CourierToPackage.objects.all()]
+    resolver = TimeResolver(couriers, packages, courier_to_package)
+
+    return resolver.resolve() * 20
+
+
 class CourierState:
     def __init__(self, location):
-        self.busy = False
         self.location = location
+        self.transport = None
 
 
 class TimeResolver:
     def __init__(self, couriers, packages, courier_to_package):
         self.current_time = 0
         self.courier_states = {}
+        self.package_locations = {}
 
         self.couriers = couriers
         self.packages = packages
         self.courier_to_package = courier_to_package
+        self.fulfilled_transports = []
 
     def step(self):
-        active_transports = [transport for transport in self.courier_to_package]
-        for
+        active_couriers = [courier for courier in self.couriers
+                           if self.courier_states[courier].transport is not None]
+        for courier in active_couriers:
+            transport = self.courier_states[courier].transport
+            package = transport.package
+
+            self.fulfilled_transports.append(transport)
+            self.package_locations[package] = transport.drop_off_location
+            self.courier_states[courier].transport = None
+
+        active_transports = [transport for transport in self.courier_to_package
+                             if transport.pickup_location == self.package_locations[transport.package]]
+        for transport in active_transports:
+            if self.courier_states[transport.courier].transport is not None:
+                continue
+
+            self.courier_states[transport.courier].transport = transport
+
+        self.current_time += 1
+
+    def resolve(self):
+        for package in self.packages:
+            self.package_locations[package] = package.source_location
+
+        for courier in self.couriers:
+            self.courier_states[courier] = CourierState(courier.assigned_area.location_center)
+
+        while len(self.fulfilled_transports) < len(self.courier_to_package):
+            print(f"Fulfilled: {len(self.fulfilled_transports)}; Total: {len(self.courier_to_package)} ")
+            self.step()
+
+        return self.current_time
