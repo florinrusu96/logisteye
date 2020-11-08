@@ -1,2 +1,2 @@
 from .packadge import PackageListView
-from .user import UserGetView
+from .user import UserPostView

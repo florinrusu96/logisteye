@@ -10,6 +10,22 @@ class CreateManifest(CronJobBase):
     schedule = Schedule(run_every_mins=RUN_EVERY_MINS)
     code = 'my_app.my_cron_job'  # a unique code
 
+    @staticmethod
+    def find_destination_locker():
+        pass
+
+    @staticmethod
+    def group_by_destination_locker():
+        pass
+
+    @staticmethod
+    def find_intermediate_lockers():
+        pass
+
+    @staticmethod
+    def assign_couriers():
+        pass
+
     def awesome_algorithm_to_get_routes(self, aggregated_data, instances):
         if aggregated_data is None:
             return
