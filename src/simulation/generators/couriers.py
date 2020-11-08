@@ -1,10 +1,12 @@
-def retrieve_lockers():
-    return []
+from rest_api import models
 
 
 def generate_couriers(count):
-    return
-
-
-def assign_couriers():
-    return
+    for i in range(count):
+        dict = {
+            'email': f'email{i}@email.com',
+            'first_name': f'first_name{i}',
+            'last_name': f'last_name{i}',
+            'password': 'p@ssw0rd',
+        }
+        models.User.objects.create(**dict)

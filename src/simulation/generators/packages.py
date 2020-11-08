@@ -3,14 +3,7 @@ import json
 from functools import cmp_to_key
 
 from simulation.generators.utils import *
-
-PARIS_LOW_LAT = 48.8145700
-PARIS_LOW_LONG = 2.2684700
-
-PARIS_HIGH_LAT = 48.9060200
-PARIS_HIGH_LONG = 2.4225900
-
-R_EARTH = 6378
+from simulation.generators.constants import *
 
 
 def generate_locations():
@@ -81,13 +74,6 @@ def compute_square_by_middle_and_dimension(lat_mid, long_mid, km):
         apply_distance_to_location(lat_mid, long_mid, -half_dimension, half_dimension),
         apply_distance_to_location(lat_mid, long_mid, half_dimension, half_dimension),
         apply_distance_to_location(lat_mid, long_mid, half_dimension, -half_dimension)
-    ]
-
-
-def apply_distance_to_location(lat, long, lat_dist, long_dist):
-    return [
-        round(lat + (lat_dist / R_EARTH) * (180 / math.pi), 10),
-        round(long + (long_dist / R_EARTH) * (180 / math.pi) / math.cos(lat * math.pi / 180), 10)
     ]
 
 

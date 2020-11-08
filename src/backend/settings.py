@@ -135,7 +135,7 @@ LOGOUT_REDIRECT_URL = "/"
 CSRF_COOKIE_DOMAIN = os.environ.get("CSRF_COOKIE_DOMAIN", "localhost")
 CSRF_TRUSTED_ORIGINS = os.environ.get("CSRF_COOKIE_DOMAIN", None) or ["localhost", "127.0.0.1"]
 
-CSRF_COOKIE_SECURE = not DEBUG  # Force the cookie to transit via HTTPS in prod
+CSRF_COOKIE_SECURE = False  # Force the cookie to transit via HTTPS in prod
 CSRF_USE_SESSIONS = False  # False then Angular can use it
 CSRF_COOKIE_HTTPONLY = False
 # SSL config

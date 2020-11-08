@@ -19,9 +19,16 @@ class LockerScaffold:
         return LockerScaffold(name, lat, long)
 
 
+def check_scaffold_in_useful_area(scaffold):
+    return PARIS_LOW_LAT < scaffold.lat < PARIS_HIGH_LAT and PARIS_LOW_LONG < scaffold.long < PARIS_HIGH_LONG
+
+
 def generate_lockers(boxes_count):
     lockers_count = boxes_count // 3
     scaffolds_array = read_locker_scaffolds()
+
+    # filter data outside area of interest
+    scaffolds_array = [scaffold for scaffold in scaffolds_array if check_scaffold_in_useful_area(scaffold)]
 
     return find_most_appealing(lockers_count, scaffolds_array)
 
