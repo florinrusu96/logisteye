@@ -5,7 +5,7 @@ from rest_api.serializers import AreaSerializer, PackageSerializer, LockerSerial
 from simulation.generators.utils import *
 from rest_api import models
 from django.db.models import Count
-
+import random
 
 DEFAULT_COURIER_RADIUS = 3
 
@@ -14,6 +14,10 @@ routed_to = {}
 
 
 def run_routing_algorithm():
+    for courier in User.objects.all():
+        courier.assigned_area = None
+        courier.save()
+
     global routed_to
     routed_to = {}
 
@@ -23,7 +27,7 @@ def run_routing_algorithm():
     distribute_on_the_margins(packages, lockers)
 
     work_to_do = True
-    cut_off = 100
+    cut_off = 10
     while work_to_do and cut_off > 0:
         work_to_do = assign_couriers(packages)
         cut_off -= 1
@@ -105,7 +109,7 @@ def find_best_locker_in_courier_area(package, courier):
     lockers_in_area = [locker for locker in Locker.objects.all()
                        if check_area_contains(courier.assigned_area, locker.location)]
     if len(lockers_in_area) == 0:
-        debug_all_data()
+        # debug_all_data()
         return None
 
     distances = [compute_distance(locker.location, package.destination_location) for locker in lockers_in_area]
@@ -294,6 +298,11 @@ def compute_time_needed_for_deliveries():
     resolver = TimeResolver(couriers, packages, courier_to_package)
 
     return resolver.resolve() * 20
+
+
+def compute_saved_co2():
+    time = compute_time_needed_for_deliveries()
+    return random.uniform(0.491, 0.522) * time / 60
 
 
 class CourierState:
