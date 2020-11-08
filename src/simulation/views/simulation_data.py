@@ -1,6 +1,7 @@
-from rest_framework import generics, response, status
+from rest_framework import generics, response, status, permissions
 
 from simulation import serializers
+from rest_api.serializers import LockerSerializer, AreaSerializer, PackageSerializer
 from rest_api.models import User, Package, CourierToPackage, Locker, Location, Size
 
 import os
@@ -34,6 +35,21 @@ class SimulationCreate(generics.CreateAPIView):
         co2 = routing.compute_saved_co2()
 
         return response.Response(status=status.HTTP_200_OK, data={"time": time, "co2": co2})
+
+
+class LockerView(generics.ListCreateAPIView):
+    serializer_class = LockerSerializer
+    queryset = models.Locker.objects.all()
+
+
+class AreaView(generics.ListCreateAPIView):
+    serializer_class = AreaSerializer
+    queryset = models.Area.objects.filter(user__isnull=False)
+
+
+class PackageView(generics.ListCreateAPIView):
+    serializer_class = PackageSerializer
+    queryset = models.Package.objects.all()
 
 
 def insert_package_data(company):
