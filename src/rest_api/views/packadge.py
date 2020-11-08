@@ -4,5 +4,5 @@ from rest_api import models, serializers
 
 
 class PackageListView(generics.ListAPIView):
-    queryset = models.Package.objects.filter(is_delivered=False)
+    queryset = models.Package.objects.all()
     serializer_class = serializers.PackageSerializer
